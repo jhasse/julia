@@ -470,6 +470,8 @@ function append!{T}(a::Array{T,1}, items::AbstractVector)
     if is(T,None)
         error(_grow_none_errmsg)
     end
+    # check that conversion doesn't fail
+    length(items) > 0 && convert(T, items[1])
     n = length(items)
     ccall(:jl_array_grow_end, Void, (Any, Uint), a, n)
     copy!(a, length(a)-n+1, items, 1, n)
@@ -480,6 +482,8 @@ function prepend!{T}(a::Array{T,1}, items::AbstractVector)
     if is(T,None)
         error(_grow_none_errmsg)
     end
+    # check that conversion doesn't fail
+    length(items) > 0 && convert(T, items[1])
     n = length(items)
     ccall(:jl_array_grow_beg, Void, (Any, Uint), a, n)
     if a === items
@@ -591,7 +595,7 @@ end
 
 const _default_splice = []
 
-function splice!(a::Vector, i::Integer, ins::AbstractArray=_default_splice)
+function splice!{T}(a::Array{T,1}, i::Integer, ins::AbstractArray=_default_splice)
     v = a[i]
     m = length(ins)
     if m == 0
@@ -599,6 +603,8 @@ function splice!(a::Vector, i::Integer, ins::AbstractArray=_default_splice)
     elseif m == 1
         a[i] = ins[1]
     else
+        # check that conversion doesn't fail
+        convert(T, ins[1])
         _growat!(a, i, m-1)
         for k = 1:m
             a[i+k-1] = ins[k]
@@ -607,14 +613,13 @@ function splice!(a::Vector, i::Integer, ins::AbstractArray=_default_splice)
     return v
 end
 
-function splice!{T<:Integer}(a::Vector, r::UnitRange{T}, ins::AbstractArray=_default_splice)
+function splice!{T,N<:Integer}(a::Array{T,1}, r::UnitRange{N}, ins::AbstractArray=_default_splice)
     v = a[r]
     m = length(ins)
     if m == 0
         deleteat!(a, r)
         return v
     end
-
     n = length(a)
     f = first(r)
     l = last(r)
@@ -628,6 +633,8 @@ function splice!{T<:Integer}(a::Vector, r::UnitRange{T}, ins::AbstractArray=_def
             _deleteat_end!(a, l-delta+1, delta)
         end
     elseif m > d
+        # check that conversion doesn't fail
+        convert(T, ins[1])
         delta = m - d
         if f-1 < n-l
             _growat_beg!(a, f, delta)
