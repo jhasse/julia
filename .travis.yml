@@ -29,4 +29,8 @@ script:
     - git config --global user.name "Travis CI"
     - cd /tmp/julia/share/julia/test && /tmp/julia/bin/julia-debug --check-bounds=yes runtests.jl all && /tmp/julia/bin/julia-debug --check-bounds=yes runtests.jl pkg
     - cd - && mv julia2 julia
+    - cd julia && make -C doc html SPHINXOPT="-W"
+    - make -C doc latexpdf SPHINXOPT="-W"
+    - make -C doc doctest
+    - make -C doc linkcheck
     - echo "Ready for packaging..."
